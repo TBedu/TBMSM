@@ -57,15 +57,21 @@ data class NavParams(
 
     // ---------------- GNSS ----------------
     /** GNSS 位置观测噪声（水平），m。城市峡谷建议 10~20。 */
-    val gnssPosSigma: Double = 12.0,
+    val gnssPosSigma: Double = 8.0,
     /** GNSS 速度观测噪声，m/s。多普勒速度精度较高。 */
     val gnssVelSigma: Double = 0.30,
     /** 航迹角观测噪声，弧度。 */
     val gnssCourseSigma: Double = 2.0 * PI / 180.0,
     /** 使用航迹角所需的最小速度，m/s。 */
     val gnssCourseMinSpeed: Double = 3.0,
-    /** 认为 GNSS 可用的最小水平精度（米），超过则丢弃该帧。 */
-    val gnssMaxAccuracyM: Double = 30.0,
+    /**
+     * GNSS 可用性门限：水平精度超过该值即整帧丢弃（位置、速度、航迹角都不用）。
+     *
+     * 取 10 m 的理由：城市峡谷与地铁出入口的多径误差常达 20~50 m 且带系统性偏置，
+     * 这种量级的观测一旦注入，会把已经收敛的航向和位置重新拉偏，
+     * 而它带来的信息量远小于轨道约束与 ZUPT。宁可不用。
+     */
+    val gnssMaxAccuracyM: Double = 10.0,
     /** 是否使用 GNSS 位置观测量（弱约束）。 */
     val useGnssPosition: Boolean = true,
 

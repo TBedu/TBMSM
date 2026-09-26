@@ -93,6 +93,7 @@ object SessionStore {
         root.put("maxDecelMps2", summary.maxDecelMps2)
         root.put("imuSamples", summary.imuSamples)
         root.put("gnssFixes", summary.gnssFixes)
+        root.put("gnssRejected", summary.gnssRejected)
         root.put("stillRatio", summary.stillRatio)
         root.put("nisRejected", summary.nisRejected)
         root.put("divergenceCount", summary.divergenceCount)
@@ -162,6 +163,7 @@ object SessionStore {
                 maxDecelMps2 = root.optDouble("maxDecelMps2", 0.0),
                 imuSamples = root.optLong("imuSamples", 0L),
                 gnssFixes = root.optInt("gnssFixes", 0),
+                gnssRejected = root.optInt("gnssRejected", 0),
                 stillRatio = root.optDouble("stillRatio", 0.0),
                 nisRejected = root.optInt("nisRejected", 0),
                 divergenceCount = root.optInt("divergenceCount", 0),

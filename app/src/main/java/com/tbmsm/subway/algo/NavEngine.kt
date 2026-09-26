@@ -68,6 +68,7 @@ class NavEngine(
 
     private var imuCount: Long = 0
     private var gnssCount: Int = 0
+    private var gnssRejected: Int = 0
     private var divergenceCount: Int = 0
     private var stillSamples: Long = 0
     private var totalSamples: Long = 0
@@ -133,6 +134,7 @@ class NavEngine(
         warnings.clear()
         imuCount = 0
         gnssCount = 0
+        gnssRejected = 0
         divergenceCount = 0
         stillSamples = 0
         totalSamples = 0
@@ -211,7 +213,13 @@ class NavEngine(
 
     fun onGnss(fix: GnssFix) {
         if (state != EngineState.RUNNING) return
-        if (fix.accuracyM > params.gnssMaxAccuracyM) return
+        // 精度门限：超过 10 m 整帧丢弃，位置/速度/航迹角都不用
+        if (fix.accuracyM > params.gnssMaxAccuracyM) {
+            gnssRejected++
+            gnssActive = false
+            lastGnssAccuracy = fix.accuracyM
+            return
+        }
         if (fix.tNs <= lastGnssTNs) return
         lastGnssTNs = fix.tNs
         gnssCount++
@@ -364,6 +372,7 @@ class NavEngine(
             gnssActive = gnssActive,
             gnssAccuracyM = lastGnssAccuracy,
             gnssCount = gnssCount,
+            gnssRejected = gnssRejected,
             magOk = magOk,
             trackActive = trackActive,
             segmentCount = segments.size,
@@ -542,6 +551,9 @@ class NavEngine(
     fun stillRatio(): Double = if (totalSamples == 0L) 0.0 else stillSamples.toDouble() / totalSamples
 
     fun nisRejectedCount(): Int = eskf.nisRejected
+
+    /** 因精度超过门限被丢弃的 GNSS 帧数。 */
+    fun gnssRejectedCount(): Int = gnssRejected
 
     fun mountingMatrix(): Mat3 = mounting
 

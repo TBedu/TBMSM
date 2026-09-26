@@ -38,6 +38,8 @@ data class LiveState(
     val gnssActive: Boolean = false,
     val gnssAccuracyM: Double = 0.0,
     val gnssCount: Int = 0,
+    /** 因精度超限被整帧丢弃的 GNSS 帧数。 */
+    val gnssRejected: Int = 0,
     val magOk: Boolean = false,
     val trackActive: Boolean = false,
     val segmentCount: Int = 0,
@@ -63,6 +65,8 @@ data class SessionSummary(
     val maxDecelMps2: Double,
     val imuSamples: Long,
     val gnssFixes: Int,
+    /** 因精度超限被丢弃的 GNSS 帧数。 */
+    val gnssRejected: Int,
     val stillRatio: Double,
     val nisRejected: Int,
     val divergenceCount: Int,

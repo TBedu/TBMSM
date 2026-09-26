@@ -229,6 +229,7 @@ class RecordingService : Service(), SensorCollector.Listener {
                         maxDecelMps2 = maxDecel,
                         imuSamples = eng.live.imuCount,
                         gnssFixes = eng.live.gnssCount,
+                        gnssRejected = eng.gnssRejectedCount(),
                         stillRatio = eng.stillRatio(),
                         nisRejected = eng.nisRejectedCount(),
                         divergenceCount = eng.divergenceCountValue(),

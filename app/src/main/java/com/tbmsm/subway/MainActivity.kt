@@ -120,6 +120,8 @@ private fun AppRoot(onRequestStart: (MainViewModel) -> Unit) {
     val useTrack by vm.useTrack.collectAsState()
     val result by vm.result.collectAsState()
     val message by vm.message.collectAsState()
+    val trackBuild by vm.trackBuild.collectAsState()
+    val building by vm.building.collectAsState()
 
     var tab by remember { mutableIntStateOf(0) }
 
@@ -193,9 +195,17 @@ private fun AppRoot(onRequestStart: (MainViewModel) -> Unit) {
             } else {
                 SessionsScreen(
                     sessions = sessions,
+                    tracks = tracks,
+                    trackBuild = trackBuild,
+                    building = building,
                     onOpen = { vm.loadResult(it) },
                     onDelete = { vm.deleteSession(it) },
-                    onRefresh = { vm.refreshSessions() }
+                    onRefresh = { vm.refreshSessions() },
+                    onBuildTrack = { ids, name -> vm.buildTrackFromSessions(ids, name) },
+                    onSaveBuiltTrack = { vm.saveBuiltTrack() },
+                    onDiscardBuiltTrack = { vm.discardBuiltTrack() },
+                    onDeleteTrack = { vm.deleteTrack(it) },
+                    isGeneratedTrack = { vm.isGeneratedTrack(it) }
                 )
             }
         }

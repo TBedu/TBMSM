@@ -133,4 +133,43 @@ object TrackRepository {
         })
         return root.toString(2)
     }
+
+    // ==================================================================
+    //  由传感器数据生成的轨道
+    // ==================================================================
+
+    /** 生成轨道的存放目录（应用私有，可写）。 */
+    fun generatedDir(filesDir: File): File =
+        File(filesDir, "tracks").also { it.mkdirs() }
+
+    /**
+     * 保存由 TrackBuilder 生成的轨道。
+     *
+     * @param name 轨道名称，会作为文件名（做安全化处理）
+     * @return 保存后的文件，失败返回 null
+     */
+    fun saveGenerated(filesDir: File, name: String, json: String): File? {
+        return try {
+            val safe = name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim()
+            if (safe.isEmpty()) return null
+            val f = File(generatedDir(filesDir), "$safe.json")
+            f.writeText(json)
+            f
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /** 删除生成的轨道。 */
+    fun deleteGenerated(filesDir: File, name: String): Boolean {
+        val safe = name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim()
+        val f = File(generatedDir(filesDir), "$safe.json")
+        return f.exists() && f.delete()
+    }
+
+    /** 判断某个轨道是否为程序生成（而非 assets 内置）。 */
+    fun isGenerated(filesDir: File, name: String): Boolean {
+        val safe = name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim()
+        return File(generatedDir(filesDir), "$safe.json").exists()
+    }
 }

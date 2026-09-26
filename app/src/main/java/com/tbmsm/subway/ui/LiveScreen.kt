@@ -242,7 +242,13 @@ private fun QualityCard(live: LiveState) {
             QualityRow("陀螺零偏", "${fmt(live.gyroBiasDegPerS, 4)} °/s", live.gyroBiasDegPerS < 0.5)
             QualityRow(
                 "GNSS",
-                if (live.gnssActive) "${live.gnssCount} 帧 / ±${fmt(live.gnssAccuracyM, 0)} m" else "无信号",
+                if (live.gnssActive) {
+                    "${live.gnssCount} 帧 / ±${fmt(live.gnssAccuracyM, 0)} m"
+                } else if (live.gnssRejected > 0) {
+                    "已停用（丢弃 ${live.gnssRejected} 帧）"
+                } else {
+                    "无信号"
+                },
                 live.gnssActive
             )
             QualityRow("磁力计", if (live.magOk) "可用" else "受干扰/未启用", live.magOk)
