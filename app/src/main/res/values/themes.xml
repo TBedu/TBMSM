@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.TBMSM" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#0B4F8A</item>
+        <item name="android:windowBackground">#F5F6F8</item>
+    </style>
+</resources>

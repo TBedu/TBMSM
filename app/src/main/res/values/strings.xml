@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">地铁运行参数测量</string>
+    <string name="notif_channel_name">测量采集</string>
+    <string name="notif_channel_desc">采集过程中的常驻通知</string>
+    <string name="notif_title">正在采集地铁运行参数</string>
+    <string name="notif_action_stop">停止</string>
+</resources>
