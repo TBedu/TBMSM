@@ -63,6 +63,8 @@ class Vec3(var x: Double = 0.0, var y: Double = 0.0, var z: Double = 0.0) {
         return if (n < 1e-15) Vec3(0.0, 0.0, 0.0) else Vec3(x / n, y / n, z / n)
     }
 
+    fun isFinite(): Boolean = x.isFinite() && y.isFinite() && z.isFinite()
+
     override fun toString(): String = String.format("(%.4f, %.4f, %.4f)", x, y, z)
 
     companion object {

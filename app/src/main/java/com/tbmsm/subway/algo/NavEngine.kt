@@ -6,6 +6,7 @@ import com.tbmsm.subway.core.GeomagneticField
 import com.tbmsm.subway.core.Mat3
 import com.tbmsm.subway.core.Quat
 import com.tbmsm.subway.core.Vec3
+import com.tbmsm.subway.core.wrapPi
 import com.tbmsm.subway.model.EngineState
 import com.tbmsm.subway.model.GnssFix
 import com.tbmsm.subway.model.ImuSample
@@ -16,6 +17,7 @@ import com.tbmsm.subway.model.TrajSample
 import com.tbmsm.subway.track.TrackModel
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 

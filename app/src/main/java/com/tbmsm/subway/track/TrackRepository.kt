@@ -8,7 +8,7 @@ import java.io.File
 /**
  * 轨道数据的 JSON 读写。
  *
- * 文件格式（assets/tracks/*.json 或 filesDir/tracks/*.json）：
+ * 文件格式（assets/tracks/ 目录或 filesDir/tracks/ 目录下的 .json 文件）：
  * {
  *   "name": "示例线路",
  *   "origin": { "lat": 39.9, "lon": 116.4, "alt": 0 },

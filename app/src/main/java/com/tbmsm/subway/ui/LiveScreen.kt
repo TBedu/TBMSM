@@ -310,7 +310,7 @@ private fun SetupCard(
 }
 
 @Composable
-private fun Metric(label: String, value: String, unit: String) {
+internal fun Metric(label: String, value: String, unit: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF666666))
         Row(verticalAlignment = Alignment.Bottom) {

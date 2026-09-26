@@ -1,0 +1,6 @@
+{
+  "name": "地铁运行参数测量",
+  "description": "Subway motion parameter measurement and sensor data recording application",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
