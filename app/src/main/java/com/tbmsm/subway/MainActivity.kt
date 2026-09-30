@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -39,7 +40,9 @@ import com.tbmsm.subway.ui.LiveScreen
 import com.tbmsm.subway.ui.MainViewModel
 import com.tbmsm.subway.ui.ResultScreen
 import com.tbmsm.subway.ui.SessionsScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class MainActivity : ComponentActivity() {
@@ -125,6 +128,28 @@ private fun AppRoot(onRequestStart: (MainViewModel) -> Unit) {
 
     var tab by remember { mutableIntStateOf(0) }
 
+    // 导入会话：选一个 zip，复制到 cache 后交给 ViewModel 解包
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val tmp = withContext(Dispatchers.IO) {
+                    try {
+                        val f = File(context.cacheDir, "import_tmp.zip")
+                        context.contentResolver.openInputStream(uri)?.use { input ->
+                            f.outputStream().use { input.copyTo(it) }
+                        }
+                        f
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                if (tmp != null) vm.importSession(tmp) else vm.showMessage("读取文件失败")
+            }
+        }
+    }
+
     LaunchedEffect(message) {
         message?.let {
             snackbar.showSnackbar(it)
@@ -174,8 +199,8 @@ private fun AppRoot(onRequestStart: (MainViewModel) -> Unit) {
                     onBack = { vm.clearResult() },
                     onExport = {
                         scope.launch {
-                            val ok = exportSession(context, vm, res.sessionId)
-                            vm.showMessage(if (ok) "已导出到所选目录" else "导出失败或已取消")
+                            val err = exportSession(context, vm, res.sessionId)
+                            vm.showMessage(err ?: "已导出到所选目录")
                         }
                     }
                 )
@@ -205,7 +230,8 @@ private fun AppRoot(onRequestStart: (MainViewModel) -> Unit) {
                     onSaveBuiltTrack = { vm.saveBuiltTrack() },
                     onDiscardBuiltTrack = { vm.discardBuiltTrack() },
                     onDeleteTrack = { vm.deleteTrack(it) },
-                    isGeneratedTrack = { vm.isGeneratedTrack(it) }
+                    isGeneratedTrack = { vm.isGeneratedTrack(it) },
+                    onImport = { importLauncher.launch(arrayOf("application/zip", "*/*")) }
                 )
             }
         }
@@ -214,18 +240,23 @@ private fun AppRoot(onRequestStart: (MainViewModel) -> Unit) {
 
 /**
  * 导出会话：把整个会话目录打包成 zip 后通过系统分享/保存。
- * 这里用 ACTION_CREATE_DOCUMENT 让用户选择保存位置，避免申请存储权限。
+ *
+ * zip 必须写在 cacheDir/exports/ 下，与 file_paths.xml 中声明的 cache-path 一致，
+ * 否则 FileProvider 会拒绝生成 URI。
  */
 private fun exportSession(
     context: android.content.Context,
     vm: MainViewModel,
     sessionId: String
-): Boolean {
+): String? {
     return try {
         val dir = vm.sessionDir(sessionId)
-        if (!dir.exists()) return false
-        val zipFile = File(context.cacheDir, "$sessionId.zip")
+        if (!dir.exists()) return "会话目录不存在"
+
+        val exportDir = File(context.cacheDir, "exports").also { it.mkdirs() }
+        val zipFile = File(exportDir, "$sessionId.zip")
         zipDirectory(dir, zipFile)
+
         val uri: Uri = FileProvider.getUriForFile(
             context, "${context.packageName}.fileprovider", zipFile
         )
@@ -236,9 +267,9 @@ private fun exportSession(
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(Intent.createChooser(intent, "导出会话数据"))
-        true
+        null
     } catch (e: Exception) {
-        false
+        "导出失败: ${e.message ?: e.javaClass.simpleName}"
     }
 }
 

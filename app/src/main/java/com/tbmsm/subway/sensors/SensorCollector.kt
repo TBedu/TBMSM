@@ -130,7 +130,9 @@ class SensorCollector(
             val tNs = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
                 location.elapsedRealtimeNanos
             } else {
-                System.nanoTime()
+                // 低版本没有 elapsedRealtimeNanos，用同一时基的 SystemClock 兜底，
+                // 不能用 System.nanoTime()（时基不同，会让时长从几百秒开始）。
+                android.os.SystemClock.elapsedRealtimeNanos()
             }
             val speed = if (location.hasSpeed()) location.speed.toDouble() else -1.0
             val bearing = if (location.hasBearing()) location.bearing.toDouble() else -1.0

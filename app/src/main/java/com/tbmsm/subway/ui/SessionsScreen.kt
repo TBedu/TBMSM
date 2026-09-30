@@ -53,6 +53,7 @@ fun SessionsScreen(
     onDiscardBuiltTrack: () -> Unit,
     onDeleteTrack: (String) -> Unit,
     isGeneratedTrack: (String) -> Boolean,
+    onImport: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showBuilder by remember { mutableStateOf(false) }
@@ -62,6 +63,7 @@ fun SessionsScreen(
     Column(modifier.fillMaxSize().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("历史会话", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            TextButton(onClick = onImport) { Text("导入") }
             TextButton(onClick = onRefresh) { Text("刷新") }
             TextButton(onClick = { showBuilder = !showBuilder }) {
                 Text(if (showBuilder) "收起" else "生成轨道")

@@ -3,6 +3,8 @@
     <files-path
         name="sessions"
         path="sessions/" />
+    <!-- 导出用的 zip 写在 cacheDir/exports/ 下，这里必须与之对应，
+         否则 FileProvider.getUriForFile 会抛 IllegalArgumentException。 -->
     <cache-path
         name="exports"
         path="exports/" />

@@ -10,6 +10,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import com.tbmsm.subway.MainActivity
 import com.tbmsm.subway.R
@@ -147,7 +148,10 @@ class RecordingService : Service(), SensorCollector.Listener {
 
         val eng = NavEngine(NavParams(), track, origin)
         engine = eng
-        eng.start(sessionId, System.nanoTime())
+        // 必须用 elapsedRealtimeNanos 作为起点：SensorEvent.timestamp 与
+        // Location.elapsedRealtimeNanos 都是这个时基，而 System.nanoTime() 不是。
+        // 两者混用会让「时长」一开始就等于设备开机时长（几百秒）。
+        eng.start(sessionId, SystemClock.elapsedRealtimeNanos())
 
         val rawDir = SessionStore.rawDir(filesDir, sessionId)
         logger = RawDataLogger(rawDir).also { it.open() }

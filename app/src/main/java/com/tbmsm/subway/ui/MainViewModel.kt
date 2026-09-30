@@ -181,6 +181,24 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun sessionDir(sessionId: String): File = SessionStore.sessionDir(filesDir, sessionId)
 
+    /**
+     * 从外部 zip 导入会话。zip 由本应用的「导出」功能产生。
+     * 导入成功后刷新列表，便于直接参与轨道生成。
+     */
+    fun importSession(zipFile: File) {
+        viewModelScope.launch {
+            val id = withContext(Dispatchers.IO) {
+                SessionStore.importSession(filesDir, zipFile)
+            }
+            if (id != null) {
+                refreshSessions()
+                _message.value = "已导入会话 $id"
+            } else {
+                _message.value = "导入失败：不是有效的会话数据包"
+            }
+        }
+    }
+
     // ==================================================================
     //  由传感器数据生成轨道
     // ==================================================================

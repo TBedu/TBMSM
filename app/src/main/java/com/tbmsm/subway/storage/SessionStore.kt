@@ -39,7 +39,8 @@ object SessionStore {
     fun listSessions(filesDir: File): List<File> {
         val root = sessionsRoot(filesDir)
         val dirs = root.listFiles { f -> f.isDirectory } ?: return emptyList()
-        return dirs.sortedByDescending { it.name }
+        // 排除导入过程中的临时目录
+        return dirs.filter { !it.name.startsWith("_") }.sortedByDescending { it.name }
     }
 
     fun deleteSession(filesDir: File, sessionId: String): Boolean {
@@ -232,4 +233,86 @@ object SessionStore {
 
     fun originOf(summary: SessionSummary): GeoPoint =
         GeoPoint(summary.originLat, summary.originLon, summary.originAlt)
+
+    /**
+     * 从 zip 导入一个会话。
+     *
+     * 期望 zip 内是会话目录的内容（track.csv / summary.json / raw/ 等），
+     * 即本应用「导出」功能产出的格式。若 zip 内多了一层同名目录，会自动下钻。
+     *
+     * @return 导入后的会话 ID；失败返回 null。
+     */
+    fun importSession(filesDir: File, zipFile: File): String? {
+        val root = sessionsRoot(filesDir)
+        val tmp = File(root, "_import_tmp").also {
+            it.deleteRecursively()
+            it.mkdirs()
+        }
+        try {
+            java.util.zip.ZipInputStream(zipFile.inputStream().buffered()).use { zis ->
+                var entry = zis.nextEntry
+                while (entry != null) {
+                    val name = entry.name.replace('\\', '/')
+                    // 防目录穿越
+                    if (name.contains("..")) {
+                        entry = zis.nextEntry
+                        continue
+                    }
+                    val out = File(tmp, name)
+                    if (entry.isDirectory) {
+                        out.mkdirs()
+                    } else {
+                        out.parentFile?.mkdirs()
+                        out.outputStream().buffered().use { zis.copyTo(it) }
+                    }
+                    zis.closeEntry()
+                    entry = zis.nextEntry
+                }
+            }
+
+            // 若解压后只有一层目录且其中含 track.csv，则下钻一层
+            var content = tmp
+            val top = tmp.listFiles()?.filter { it.name != "__MACOSX" } ?: emptyList()
+            if (top.size == 1 && top[0].isDirectory && !File(tmp, "track.csv").exists()) {
+                content = top[0]
+            }
+
+            if (!File(content, "track.csv").exists() &&
+                !File(content, "track_smoothed.csv").exists()
+            ) {
+                return null
+            }
+
+            // 会话 ID 优先取 summary.json 里的，否则用时间戳生成
+            val summaryFile = File(content, "summary.json")
+            val idFromSummary = if (summaryFile.exists()) {
+                try {
+                    JSONObject(summaryFile.readText()).optString("sessionId", "")
+                } catch (e: Exception) {
+                    ""
+                }
+            } else ""
+            var newId = idFromSummary.ifBlank { newSessionId() }
+
+            // 避免覆盖已有会话
+            var target = File(root, newId)
+            var suffix = 1
+            while (target.exists()) {
+                newId = "${idFromSummary.ifBlank { newSessionId() }}_imp$suffix"
+                target = File(root, newId)
+                suffix++
+            }
+
+            if (!content.renameTo(target)) {
+                // renameTo 跨卷可能失败，退化为逐文件复制
+                content.copyRecursively(target, overwrite = true)
+                content.deleteRecursively()
+            }
+            return newId
+        } catch (e: Exception) {
+            return null
+        } finally {
+            tmp.deleteRecursively()
+        }
+    }
 }

@@ -35,12 +35,29 @@ data class NavParams(
     // ---------------- 静止检测（GLRT + 迟滞） ----------------
     /** 滑动窗口长度（采样点数），100Hz 下 50 点 = 0.5s。 */
     val zuptWindow: Int = 50,
-    /** GLRT 中假定的加计样本噪声标准差，m/s^2。 */
-    val zuptSigmaAcc: Double = 0.02,
-    /** GLRT 中假定的陀螺样本噪声标准差，rad/s。 */
-    val zuptSigmaGyro: Double = 0.002,
-    /** GLRT 判决门限（6 自由度卡方，理论均值 6）。 */
-    val zuptThreshold: Double = 40.0,
+    /**
+     * GLRT 中假定的加计样本噪声标准差，m/s^2。
+     *
+     * 地铁车厢停站时并非绝对静止：空调与空压机持续振动、乘客走动、
+     * 车体受轨道与邻线列车扰动，实测残余加速度可达 0.05~0.15 m/s²。
+     * 取 0.02 会让统计量长期高于门限，导致停站期间无法进入静止、
+     * 丢失最宝贵的零速锚点。放宽到 0.10 以覆盖这些低频扰动。
+     */
+    val zuptSigmaAcc: Double = 0.10,
+    /**
+     * GLRT 中假定的陀螺样本噪声标准差，rad/s。
+     *
+     * 同理，停站时车体仍有微小角振动（约 0.005~0.02 rad/s）。
+     * 取 0.002 过于严格，放宽到 0.01。
+     */
+    val zuptSigmaGyro: Double = 0.01,
+    /**
+     * GLRT 判决门限（6 自由度卡方，理论均值 6）。
+     *
+     * 放宽噪声假设后统计量整体变小，门限相应下调到 25，
+     * 使「停站」与「运行」的判决边界仍落在合理位置。
+     */
+    val zuptThreshold: Double = 25.0,
     /** 进入静止需连续满足的采样点数（100Hz 下 100 点 = 1.0s）。 */
     val zuptEnterHold: Int = 100,
     /** 退出静止需连续失败的采样点数，取小值以免在停站期间丢失锚定。 */
@@ -48,12 +65,17 @@ data class NavParams(
     /**
      * 安全阀：估计速度超过该值时拒绝 ZUPT。
      * 用于防御「匀速平顺运行被误判为静止」这一最危险的失效模式。
+     *
+     * 取 2.0 而非 5.0：地铁站间最高速度通常 60~80 km/h（17~22 m/s），
+     * 但进站前会长时间低速滑行（1~3 m/s）。若门限设成 5.0，
+     * 这段低速滑行会被误判为静止并强行把速度拉零，造成里程严重偏短。
+     * 2.0 能在保留停站锚定的同时挡住低速滑行误判。
      */
-    val zuptMaxSpeedGuard: Double = 5.0,
-    /** ZUPT 速度观测噪声，m/s。 */
-    val zuptVelSigma: Double = 0.01,
+    val zuptMaxSpeedGuard: Double = 2.0,
+    /** ZUPT 速度观测噪声，m/s。放宽后允许停站时存在微小残余速度。 */
+    val zuptVelSigma: Double = 0.03,
     /** 重力调平观测噪声（弧度），仅静止时使用。 */
-    val levelSigma: Double = 0.02,
+    val levelSigma: Double = 0.03,
 
     // ---------------- GNSS ----------------
     /** GNSS 位置观测噪声（水平），m。城市峡谷建议 10~20。 */
@@ -114,8 +136,14 @@ data class NavParams(
     val alignGyroTolRad: Double = 0.02,
     /** 粗对准期间允许的最大加计方差，m^2/s^4。 */
     val alignAccVarMax: Double = 0.01,
-    /** 粗对准期间允许的最大陀螺方差，rad^2/s^2。 */
-    val alignGyroVarMax: Double = 1.0e-4,
+    /**
+     * 粗对准期间允许的最大陀螺方差，rad^2/s^2。
+     *
+     * 原值 1.0e-4（σ≈0.01 rad/s）对地铁车厢偏严：停站时车体仍有
+     * 空调与空压机引起的角振动，容易导致对准反复被拒、迟迟无法开始。
+     * 放宽到 4.0e-4（σ≈0.02 rad/s），与 ZUPT 的噪声假设保持一致。
+     */
+    val alignGyroVarMax: Double = 4.0e-4,
 
     // ---------------- 输出 ----------------
     /** 输出低通滤波时间常数，s。 */

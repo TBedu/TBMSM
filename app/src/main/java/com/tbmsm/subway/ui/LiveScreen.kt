@@ -236,7 +236,7 @@ private fun QualityCard(live: LiveState) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("解算质量", style = MaterialTheme.typography.titleSmall)
             QualityRow("零速检测", if (live.still) "静止" else "运动", live.still)
-            QualityRow("ZUPT 统计量", fmt(live.zuptStatistic, 1), live.zuptStatistic in 0.0..40.0)
+            QualityRow("ZUPT 统计量", fmt(live.zuptStatistic, 1), live.zuptStatistic in 0.0..25.0)
             QualityRow("位置不确定度", "${fmt(live.posSigmaM, 1)} m", live.posSigmaM < 50)
             QualityRow("航向不确定度", "${fmt(live.headingSigmaDeg, 2)} °", live.headingSigmaDeg < 5)
             QualityRow("陀螺零偏", "${fmt(live.gyroBiasDegPerS, 4)} °/s", live.gyroBiasDegPerS < 0.5)
@@ -282,13 +282,28 @@ private fun SetupCard(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("轨道数据", style = MaterialTheme.typography.titleSmall)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("启用轨道约束", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                Column(Modifier.weight(1f)) {
+                    Text("启用轨道约束", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        if (useTrack) "沿轨道推算，地下段航向稳定" else "纯惯性推算，不依赖任何线路数据",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF666666)
+                    )
+                }
                 Switch(checked = useTrack, onCheckedChange = onToggleUseTrack)
             }
-            if (trackNames.isEmpty()) {
+
+            if (!useTrack) {
                 Text(
-                    "未找到轨道数据。可在 assets/tracks/ 或应用私有目录 tracks/ 下放置 JSON 文件。" +
-                        "没有轨道数据时，地下段仅靠零速修正，航向会缓慢漂移。",
+                    "已关闭轨道约束：完全由 IMU + 零速修正推算速度与里程，" +
+                        "不需要线路数据。地下段航向会缓慢漂移，里程精度低于启用轨道时。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF8D6E00)
+                )
+            } else if (trackNames.isEmpty()) {
+                Text(
+                    "未找到轨道数据。可在 assets/tracks/ 或应用私有目录 tracks/ 下放置 JSON 文件，" +
+                        "也可在「记录」页由历史会话生成。若暂时没有，请关闭上方开关。",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF8D6E00)
                 )
