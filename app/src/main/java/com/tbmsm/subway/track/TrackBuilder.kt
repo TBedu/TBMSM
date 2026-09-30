@@ -613,15 +613,23 @@ object TrackBuilder {
         val radius = minCurveRadius(pts)
         if (radius < 150.0) {
             issues.add(
-                String.format("最小曲线半径仅 %.0f m，小于地铁常见下限（约 300 m），" +
-                    "可能是解算航向漂移导致的虚假转弯", radius
+                String.format(
+                    java.util.Locale.US,
+                    "最小曲线半径仅 %.0f m，小于地铁常见下限（约 300 m），" +
+                        "可能是解算航向漂移导致的虚假转弯",
+                    radius
+                )
             )
         }
         val selfDist = minSelfDistance(pts)
         if (selfDist < 30.0) {
             issues.add(
-                String.format("中心线存在自交或近自交（最小间距 %.0f m），" +
-                    "说明轨迹被解算误差扭曲", selfDist
+                String.format(
+                    java.util.Locale.US,
+                    "中心线存在自交或近自交（最小间距 %.0f m），" +
+                        "说明轨迹被解算误差扭曲",
+                    selfDist
+                )
             )
         }
         if (result.simplifiedPoints < 3) {
